@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 CONTAINER_NAME = os.getenv("CONTAINER_NAME", "container5").strip()
-BOT_COUNT = int(os.getenv("BOT_COUNT_TARGET", "40"))
+BOT_COUNT = int(os.getenv("BOT_COUNT_TARGET", "10"))
 os.environ["CONTAINER_NAME"] = CONTAINER_NAME
 os.environ["BOT_COUNT"] = str(BOT_COUNT)
 
