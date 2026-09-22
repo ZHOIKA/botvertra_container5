@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Worker compartilhado: 20 bots lógicos em um único processo Python."""
+"""Worker compartilhado: 10 bots lógicos em um único processo Python."""
 
 import asyncio
 import json
@@ -23,7 +23,7 @@ for directory in (STATE_DIR, LOG_DIR, CMD_DIR):
     directory.mkdir(exist_ok=True)
 
 CONTAINER_NAME = os.getenv("CONTAINER_NAME", "container").strip()
-BOT_COUNT = int(os.getenv("BOT_COUNT", "20"))
+BOT_COUNT = int(os.getenv("BOT_COUNT", "10"))
 BOTS = [f"bot-{i:02d}" for i in range(1, BOT_COUNT + 1)]
 STARTED_AT = time.time()
 WORKER_BUILD = "shared-worker-v1"
