@@ -13,6 +13,7 @@ from pathlib import Path
 
 import requests
 import ip_rotator
+import shell_exec
 
 BASE_DIR = Path(__file__).resolve().parent
 STATE_DIR = BASE_DIR / "state"
@@ -31,7 +32,11 @@ WORKER_BUILD = "shared-worker-v1"
 ALLOWED_COMMANDS = {
     "ping", "status", "uptime", "hostname",
     "disk", "memory", "echo", "logs", "internet", "public_ip",
+    "exec", "shell", "sh",
 }
+
+# Comandos que delegam para o shell do container (ver shell_exec.py).
+EXEC_COMMANDS = shell_exec.EXEC_COMMANDS
 
 
 def read_tor_state():
@@ -204,6 +209,12 @@ def execute_command(bot, payload):
 
     if cmd not in ALLOWED_COMMANDS:
         return {"ok": False, "bot": bot, "error": f"command_not_allowed: {cmd}"}
+
+    if cmd in EXEC_COMMANDS:
+        route, _gen = route_for(bot)
+        request = dict(payload)
+        request["route_env"] = route.get("env", {})
+        return shell_exec.run_shell(bot, request)
 
     if cmd == "ping":
         return {"ok": True, "bot": bot, "result": "pong"}

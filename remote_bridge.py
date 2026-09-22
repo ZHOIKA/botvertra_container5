@@ -59,7 +59,28 @@ def should_rotate(result):
     return None
 
 
-async def run_local(bot, command, args):
+def extra_options(msg):
+    """Repassa opcoes do comando (timeout, cwd, stdin) para o worker local."""
+    return {
+        key: msg.get(key)
+        for key in ("timeout", "cwd", "stdin", "command_line", "shell", "env")
+        if msg.get(key) is not None
+    }
+
+
+def local_wait_seconds(options):
+    """Espera o worker local por tempo compativel com o timeout pedido."""
+    wait = 8.0
+    try:
+        requested = float((options or {}).get("timeout") or 0)
+    except (TypeError, ValueError):
+        requested = 0
+    if requested:
+        wait = max(wait, min(requested + 10.0, 600.0))
+    return wait
+
+
+async def run_local(bot, command, args, options=None):
     inbox = CMD_DIR / f"{bot}.json"
     outbox = CMD_DIR / f"{bot}.out.json"
 
@@ -67,14 +88,17 @@ async def run_local(bot, command, args):
     if not locked:
         return {"ok": False, "bot": bot, "error": "lock_timeout"}
 
+    request = {"command": command, "args": args}
+    request.update(options or {})
+
     try:
         outbox.unlink(missing_ok=True)
         inbox.write_text(
-            json.dumps({"command": command, "args": args}, indent=2),
+            json.dumps(request, indent=2),
             encoding="utf-8",
         )
 
-        deadline = time.monotonic() + 8
+        deadline = time.monotonic() + local_wait_seconds(options)
         while time.monotonic() < deadline:
             if outbox.exists():
                 try:
@@ -93,13 +117,14 @@ async def handle_command(msg):
     bot = msg.get("bot")
     command = msg.get("command")
     args = msg.get("args", [])
+    options = extra_options(msg)
 
     if bot not in BOTS:
         result = {"ok": False, "bot": bot, "error": "unknown_bot"}
     elif not (STATE_DIR / f"{bot}.json").exists():
         result = {"ok": False, "bot": bot, "error": "bot_offline"}
     else:
-        result = await run_local(bot, command, args)
+        result = await run_local(bot, command, args, options)
 
     reason = should_rotate(result)
     if reason:

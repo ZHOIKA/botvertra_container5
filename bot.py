@@ -19,6 +19,8 @@ from pathlib import Path
 
 import requests
 
+import shell_exec
+
 BOT_ID = os.getenv("BOT_ID", "bot-unknown")
 BOT_PROXY = os.getenv("BOT_PROXY", "").strip()
 TOR_SOCKS_URL = os.getenv("TOR_SOCKS_URL", "").strip()
@@ -37,7 +39,11 @@ WORKER_BUILD = "multi-ip-v1"
 ALLOWED_COMMANDS = {
     "ping", "status", "uptime", "hostname",
     "disk", "memory", "echo", "logs", "internet", "public_ip",
+    "exec", "shell", "sh",
 }
+
+# Comandos que delegam para o shell do container (ver shell_exec.py).
+EXEC_COMMANDS = shell_exec.EXEC_COMMANDS
 
 
 def read_tor_state():
@@ -179,6 +185,15 @@ def execute_command(payload: dict):
             "error": f"command_not_allowed: {cmd}",
             "allowed": sorted(ALLOWED_COMMANDS),
         }
+
+    if cmd in EXEC_COMMANDS:
+        request = dict(payload)
+        request["route_env"] = {
+            "BOT_PROXY": BOT_PROXY,
+            "TOR_SOCKS_URL": TOR_SOCKS_URL,
+            "TOR_ISOLATION_ID": TOR_ISOLATION_ID,
+        }
+        return shell_exec.run_shell(BOT_ID, request)
 
     if cmd == "ping":
         return {"ok": True, "bot": BOT_ID, "result": "pong"}
