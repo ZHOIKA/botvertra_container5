@@ -31,7 +31,7 @@ ROUTES_FILE = STATE_DIR / "routes.json"
 
 # --- configuracao (override por variavel de ambiente) ---------------------- #
 CONTAINER_NAME = os.getenv("CONTAINER_NAME", "container5").strip()
-BOT_COUNT = int(os.getenv("BOT_COUNT", "20"))
+BOT_COUNT = int(os.getenv("BOT_COUNT", "10"))
 ROTATE_ON_TIMEOUT = os.getenv("ROTATE_ON_TIMEOUT", "1").strip().lower() not in ("0", "false", "no", "off")
 ROTATION_COOLDOWN = float(os.getenv("ROTATION_COOLDOWN", "45"))
 MAX_ROUTE_GENERATION = int(os.getenv("MAX_ROUTE_GENERATION", "100"))
