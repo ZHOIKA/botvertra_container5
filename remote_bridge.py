@@ -26,7 +26,7 @@ CONTAINER_NAME = os.getenv("CONTAINER_NAME", "container5").strip()
 if not CONTROLLER_URL or not CONTROLLER_TOKEN:
     raise SystemExit("CONTROLLER_URL e CONTROLLER_TOKEN precisam estar configurados")
 
-BOT_COUNT = int(os.getenv("BOT_COUNT", "40"))
+BOT_COUNT = int(os.getenv("BOT_COUNT", "10"))
 BOTS = [f"bot-{i:02d}" for i in range(1, BOT_COUNT + 1)]
 
 TIMEOUT_ERRORS = {"local_timeout", "bot_timeout", "lock_timeout"}
