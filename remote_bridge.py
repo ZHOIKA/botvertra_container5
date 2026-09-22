@@ -19,12 +19,25 @@ BASE_DIR = Path(__file__).resolve().parent
 CMD_DIR = BASE_DIR / "commands"
 STATE_DIR = BASE_DIR / "state"
 
+DEFAULT_CONTROLLER_URL = "wss://botvertra-controller.onrender.com/ws/agent"
 CONTROLLER_URL = os.getenv("CONTROLLER_URL", "").strip()
 CONTROLLER_TOKEN = os.getenv("CONTROLLER_TOKEN", "").strip()
 CONTAINER_NAME = os.getenv("CONTAINER_NAME", "container5").strip()
 
-if not CONTROLLER_URL or not CONTROLLER_TOKEN:
-    raise SystemExit("CONTROLLER_URL e CONTROLLER_TOKEN precisam estar configurados")
+if not CONTROLLER_TOKEN:
+    raise SystemExit("CONTROLLER_TOKEN precisa estar configurado")
+
+if not (CONTROLLER_URL.startswith("ws://") or CONTROLLER_URL.startswith("wss://")):
+    print("[bridge] CONTROLLER_URL inválida; usando controller padrão do Render", flush=True)
+    CONTROLLER_URL = DEFAULT_CONTROLLER_URL
+
+def safe_error(exc):
+    text = str(exc)
+    if CONTROLLER_TOKEN:
+        text = text.replace(CONTROLLER_TOKEN, "<redacted>")
+    if CONTROLLER_URL:
+        text = text.replace(CONTROLLER_URL, "<controller>")
+    return text
 
 BOT_COUNT = int(os.getenv("BOT_COUNT", "10"))
 BOTS = [f"bot-{i:02d}" for i in range(1, BOT_COUNT + 1)]
@@ -176,7 +189,7 @@ async def main():
             await connect_once()
             delay = 2
         except Exception as exc:  # noqa: BLE001
-            print(f"[bridge] desconectado: {exc} • retry {delay}s", flush=True)
+            print(f"[bridge] desconectado: {safe_error(exc)} • retry {delay}s", flush=True)
             await asyncio.sleep(delay)
             delay = min(delay * 2, 30)
 
